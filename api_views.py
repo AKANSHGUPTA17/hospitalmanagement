@@ -1,80 +1,74 @@
 from rest_framework import generics, serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.db.models import Sum
-from datetime import date, timedelta
-from .models import Bill, Payment
+from django.db.models import Q
+from .models import Patient, PatientVitals
 
 
-class BillSerializer(serializers.ModelSerializer):
-    patient_name = serializers.SerializerMethodField()
-    doctor_name = serializers.SerializerMethodField()
+class PatientSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     class Meta:
-        model = Bill
+        model = Patient
         fields = '__all__'
-        read_only_fields = ['bill_number', 'subtotal', 'total_amount', 'due_amount', 'created_at']
+        read_only_fields = ['patient_id', 'created_at', 'updated_at']
 
-    def get_patient_name(self, obj):
-        return obj.patient.full_name if obj.patient else ''
+    def get_full_name(self, obj):
+        return obj.full_name
 
-    def get_doctor_name(self, obj):
-        return str(obj.doctor) if obj.doctor else ''
+    def get_status(self, obj):
+        return obj.status
 
 
-class PaymentSerializer(serializers.ModelSerializer):
+class PatientVitalsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Payment
+        model = PatientVitals
         fields = '__all__'
+        read_only_fields = ['recorded_at']
 
 
-class BillListCreateView(generics.ListCreateAPIView):
-    queryset = Bill.objects.all().select_related('patient', 'doctor')
-    serializer_class = BillSerializer
+class PatientListCreateView(generics.ListCreateAPIView):
+    serializer_class = PatientSerializer
+
+    def get_queryset(self):
+        qs = Patient.objects.all()
+        q = self.request.query_params.get('q')
+        if q:
+            qs = qs.filter(
+                Q(first_name__icontains=q) | Q(last_name__icontains=q) |
+                Q(phone__icontains=q) | Q(patient_id__icontains=q)
+            )
+        return qs
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
 
-class BillDetailView(generics.RetrieveUpdateAPIView):
-    queryset = Bill.objects.all()
-    serializer_class = BillSerializer
+class PatientDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Patient.objects.all()
+    serializer_class = PatientSerializer
 
 
-class PaymentListCreateView(generics.ListCreateAPIView):
-    serializer_class = PaymentSerializer
+@api_view(['GET'])
+def patient_search(request):
+    q = request.query_params.get('q', '')
+    patients = Patient.objects.filter(
+        Q(first_name__icontains=q) | Q(last_name__icontains=q) |
+        Q(phone__icontains=q) | Q(patient_id__icontains=q)
+    )[:10]
+    serializer = PatientSerializer(patients, many=True)
+    return Response(serializer.data)
+
+
+class PatientVitalsView(generics.ListCreateAPIView):
+    serializer_class = PatientVitalsSerializer
 
     def get_queryset(self):
-        return Payment.objects.filter(bill_id=self.kwargs['pk'])
+        return PatientVitals.objects.filter(patient_id=self.kwargs['pk'])
 
     def perform_create(self, serializer):
-        serializer.save(bill_id=self.kwargs['pk'], received_by=self.request.user)
-
-
-@api_view(['GET'])
-def daily_revenue_report(request):
-    today = date.today()
-    data = []
-    for i in range(29, -1, -1):
-        day = today - timedelta(days=i)
-        revenue = Bill.objects.filter(
-            bill_date__date=day, payment_status='paid'
-        ).aggregate(total=Sum('paid_amount'))['total'] or 0
-        data.append({'date': day.isoformat(), 'revenue': float(revenue)})
-    return Response(data)
-
-
-@api_view(['GET'])
-def monthly_revenue_report(request):
-    today = date.today()
-    data = []
-    for i in range(11, -1, -1):
-        if today.month - i > 0:
-            month, year = today.month - i, today.year
-        else:
-            month, year = today.month - i + 12, today.year - 1
-        revenue = Bill.objects.filter(
-            bill_date__year=year, bill_date__month=month, payment_status='paid'
-        ).aggregate(total=Sum('paid_amount'))['total'] or 0
-        data.append({'year': year, 'month': month, 'revenue': float(revenue)})
-    return Response(data)
+        serializer.save(
+            patient_id=self.kwargs['pk'],
+            recorded_by=self.request.user
+        )

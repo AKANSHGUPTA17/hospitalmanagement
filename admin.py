@@ -1,2 +1,3 @@
 from django.contrib import admin
-# Dashboard has no models to register
+from .models import *
+# Register your models here

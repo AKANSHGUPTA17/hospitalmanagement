@@ -1,0 +1,4 @@
+INFO 2026-02-18 12:50:37,960 autoreload 15496 17428 Watching for file changes with StatReloader
+WARNING 2026-02-18 12:51:28,819 log 15496 12640 Not Found: /favicon.ico
+INFO 2026-02-18 12:52:23,736 autoreload 15496 17428 C:\Users\Akansh Gupta\Downloads\files\hospital_management_system\hospital_management\hospital_mgmt\settings.py changed, reloading.
+INFO 2026-02-18 12:52:24,634 autoreload 21548 5200 Watching for file changes with StatReloader
