@@ -1,31 +1,23 @@
-from rest_framework import generics, serializers
-from .models import Appointment
+from rest_framework import generics, permissions
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import User
+from .serializers import UserSerializer
 
 
-class AppointmentSerializer(serializers.ModelSerializer):
-    patient_name = serializers.SerializerMethodField()
-    doctor_name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Appointment
-        fields = '__all__'
-        read_only_fields = ['appointment_id', 'created_at']
-
-    def get_patient_name(self, obj):
-        return obj.patient.full_name
-
-    def get_doctor_name(self, obj):
-        return f"Dr. {obj.doctor.full_name}"
+class UserListCreateAPIView(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
 
 
-class AppointmentListCreateView(generics.ListCreateAPIView):
-    queryset = Appointment.objects.all().select_related('patient', 'doctor')
-    serializer_class = AppointmentSerializer
-
-    def perform_create(self, serializer):
-        serializer.save(booked_by=self.request.user)
+class UserDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAdminUser]
 
 
-class AppointmentDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Appointment.objects.all()
-    serializer_class = AppointmentSerializer
+class CurrentUserAPIView(APIView):
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)

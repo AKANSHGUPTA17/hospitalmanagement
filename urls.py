@@ -1,13 +1,15 @@
 from django.urls import path
 from . import views
 
-app_name = 'appointments'
+app_name = 'auth'
 
 urlpatterns = [
-    path('', views.appointment_list, name='appointment_list'),
-    path('create/', views.appointment_create, name='appointment_create'),
-    path('<int:pk>/', views.appointment_detail, name='appointment_detail'),
-    path('<int:pk>/edit/', views.appointment_update, name='appointment_update'),
-    path('<int:pk>/status/', views.appointment_status_update, name='appointment_status'),
-    path('schedule/<int:doctor_pk>/', views.doctor_schedule, name='doctor_schedule'),
+    path('login/', views.LoginView.as_view(), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('profile/', views.profile_view, name='profile'),
+    path('change-password/', views.change_password_view, name='change_password'),
+    path('users/', views.user_list, name='user_list'),
+    path('users/create/', views.user_create, name='user_create'),
+    path('users/<int:pk>/edit/', views.user_edit, name='user_edit'),
+    path('users/<int:pk>/toggle/', views.user_toggle, name='user_toggle'),
 ]
