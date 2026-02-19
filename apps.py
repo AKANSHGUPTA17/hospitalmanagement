@@ -1,6 +1,14 @@
-from django.apps import AppConfig
+from __future__ import annotations
 
-class AppConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.patients'
-    label = 'patients'
+from django.apps import AppConfig
+from django.core.checks import Tags, register
+
+from corsheaders.checks import check_settings
+
+
+class CorsHeadersAppConfig(AppConfig):
+    name = "corsheaders"
+    verbose_name = "django-cors-headers"
+
+    def ready(self) -> None:
+        register(Tags.security)(check_settings)
