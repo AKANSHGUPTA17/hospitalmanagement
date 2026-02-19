@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
-class AuthenticationConfig(AppConfig):
+class AppConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.authentication'
-    label = 'authentication'
+    name = 'apps.billing'
+    label = 'billing'

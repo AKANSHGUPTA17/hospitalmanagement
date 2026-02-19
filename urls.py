@@ -1,15 +1,14 @@
 from django.urls import path
 from . import views
 
-app_name = 'auth'
+app_name = 'billing'
 
 urlpatterns = [
-    path('login/', views.LoginView.as_view(), name='login'),
-    path('logout/', views.LogoutView.as_view(), name='logout'),
-    path('profile/', views.profile_view, name='profile'),
-    path('change-password/', views.change_password_view, name='change_password'),
-    path('users/', views.user_list, name='user_list'),
-    path('users/create/', views.user_create, name='user_create'),
-    path('users/<int:pk>/edit/', views.user_edit, name='user_edit'),
-    path('users/<int:pk>/toggle/', views.user_toggle, name='user_toggle'),
+    path('', views.bill_list, name='bill_list'),
+    path('create/', views.bill_create, name='bill_create'),
+    path('<int:pk>/', views.bill_detail, name='bill_detail'),
+    path('<int:pk>/edit/', views.bill_edit, name='bill_edit'),
+    path('<int:pk>/payment/', views.add_payment, name='add_payment'),
+    path('<int:pk>/pdf/', views.bill_pdf, name='bill_pdf'),
+    path('reports/revenue/', views.revenue_report, name='revenue_report'),
 ]

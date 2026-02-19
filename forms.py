@@ -1,55 +1,57 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
-from .models import User
+from .models import Bill, BillItem, Payment
 
 
-class LoginForm(forms.Form):
-    username = forms.CharField(
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Username',
-            'autofocus': True
-        })
-    )
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Password'
-        })
-    )
-
-
-class UserCreationForm(BaseUserCreationForm):
+class BillForm(forms.ModelForm):
     class Meta:
-        model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'role', 'phone',
-                  'password1', 'password2', 'profile_picture']
+        model = Bill
+        exclude = ['bill_number', 'subtotal', 'total_amount', 'due_amount',
+                   'created_by', 'created_at', 'updated_at']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'role': forms.Select(attrs={'class': 'form-select'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'patient': forms.Select(attrs={'class': 'form-select', 'id': 'patientSelect'}),
+            'doctor': forms.Select(attrs={'class': 'form-select'}),
+            'consultation_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'entry_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'room_charges': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'medicine_charges': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'lab_charges': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'other_charges': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'discount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'tax': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'paid_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'is_ayushman': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'ayushman_claim_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'payment_status': forms.Select(attrs={'class': 'form-select'}),
+            'payment_method': forms.Select(attrs={'class': 'form-select'}),
+            'payment_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'bill_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['password1'].widget.attrs['class'] = 'form-control'
-        self.fields['password2'].widget.attrs['class'] = 'form-control'
+
+class BillItemFormSet(forms.BaseInlineFormSet):
+    pass
 
 
-class UserEditForm(forms.ModelForm):
+BillItemInlineFormSet = forms.inlineformset_factory(
+    Bill, BillItem,
+    fields=['description', 'quantity', 'unit_price'],
+    extra=3, can_delete=True,
+    widgets={
+        'description': forms.TextInput(attrs={'class': 'form-control'}),
+        'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+    }
+)
+
+
+class PaymentForm(forms.ModelForm):
     class Meta:
-        model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'role', 'phone',
-                  'profile_picture', 'is_active']
+        model = Payment
+        fields = ['amount', 'payment_method', 'transaction_id', 'notes']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'role': forms.Select(attrs={'class': 'form-select'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'payment_method': forms.Select(attrs={'class': 'form-select'}),
+            'transaction_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
